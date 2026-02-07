@@ -81,6 +81,7 @@ export default function JobDetail() {
     payment_method: null as PaymentMethod | null,
     applied_package_id: null as string | null,
     applied_package_name: null as string | null,
+    paid_amount: '0',
   });
 
   const handleStatusChange = (status: JobStatus) => {
@@ -115,6 +116,7 @@ export default function JobDetail() {
         payment_method: job.payment_method || null,
         applied_package_id: job.applied_package_id || null,
         applied_package_name: job.applied_package_name || null,
+        paid_amount: job.paid_amount?.toString() || '0',
       });
       setShowEditDialog(true);
     }
@@ -165,6 +167,7 @@ export default function JobDetail() {
         payment_method: editForm.payment_method,
         applied_package_id: editForm.applied_package_id,
         applied_package_name: editForm.applied_package_name,
+        paid_amount: parseFloat(editForm.paid_amount) || 0,
       },
       {
         onSuccess: () => setShowEditDialog(false),
@@ -444,6 +447,14 @@ export default function JobDetail() {
                   <span>Grand Total</span>
                   <span>₹{total.toLocaleString()}</span>
                 </div>
+                <div className="flex justify-between text-sm text-success font-medium">
+                  <span>Amount Paid</span>
+                  <span>₹{(job.paid_amount || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between font-bold text-xl border-t-2 border-double pt-2 text-warning">
+                  <span>Balance Due</span>
+                  <span>₹{(total - (job.paid_amount || 0)).toLocaleString()}</span>
+                </div>
               </div>
 
               {job.next_service_date && (
@@ -584,6 +595,16 @@ export default function JobDetail() {
                   value={editForm.discount_amount}
                   onChange={(e) => setEditForm({ ...editForm, discount_amount: e.target.value })}
                 />
+              </div>
+              <div className="space-y-2 p-3 bg-muted/50 rounded-lg border border-warning/20">
+                <Label className="text-warning font-bold">Amount Paid (₹)</Label>
+                <Input
+                  type="number"
+                  value={editForm.paid_amount}
+                  onChange={(e) => setEditForm({ ...editForm, paid_amount: e.target.value })}
+                  className="font-bold border-warning/50 focus:ring-warning"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">Enter how much the customer has already paid.</p>
               </div>
 
 
