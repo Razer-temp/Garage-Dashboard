@@ -33,6 +33,7 @@ export function useJobs(status?: JobStatus) {
       if (error) throw error;
       return data as JobWithDetails[];
     },
+    enabled: !!user?.id,
   });
 }
 
@@ -181,6 +182,7 @@ export function useUpcomingReminders() {
       if (error) throw error;
       return data as JobWithDetails[];
     },
+    enabled: !!user?.id,
   });
 }
 export function useGenerateInvoice() {
