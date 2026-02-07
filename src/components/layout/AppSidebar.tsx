@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Users, Briefcase, Bell, LogOut, Wrench, Menu, Settings as SettingsIcon, BarChart, Plus,
-  Boxes, Package,
+  Boxes, Package, CreditCard,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,6 +25,7 @@ const navItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
   { title: 'Customers', url: '/customers', icon: Users },
   { title: 'Work Orders', url: '/jobs', icon: Briefcase },
+  { title: 'Pending Payments', url: '/pending-payments', icon: CreditCard },
   { title: 'Reminders', url: '/reminders', icon: Bell },
   { title: 'Parts Mall', url: '/parts', icon: Package },
   { title: 'Service Packages', url: '/packages', icon: Boxes },

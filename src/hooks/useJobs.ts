@@ -4,10 +4,10 @@ import { Job, JobWithDetails, JobStatus, PaymentStatus, JobInsert, JobUpdate } f
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
-export function useJobs(status?: JobStatus) {
+export function useJobs(status?: JobStatus, paymentStatus?: PaymentStatus | PaymentStatus[]) {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ['jobs', user?.id, status],
+    queryKey: ['jobs', user?.id, status, paymentStatus],
     queryFn: async () => {
       let query = supabase
         .from('jobs')
@@ -22,6 +22,14 @@ export function useJobs(status?: JobStatus) {
 
       if (status) {
         query = query.eq('status', status);
+      }
+
+      if (paymentStatus) {
+        if (Array.isArray(paymentStatus)) {
+          query = query.in('payment_status', paymentStatus);
+        } else {
+          query = query.eq('payment_status', paymentStatus);
+        }
       }
 
       if (user?.id) {

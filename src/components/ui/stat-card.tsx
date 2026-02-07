@@ -1,17 +1,19 @@
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
+import { Button } from './button';
 
 interface StatCardProps {
   title: string;
   value: number | string;
   icon: LucideIcon;
   description?: string;
-  trend?: 'up' | 'down' | 'neutral';
+  link?: string;
   className?: string;
 }
 
-export function StatCard({ title, value, icon: Icon, description, className }: StatCardProps) {
+export function StatCard({ title, value, icon: Icon, description, link, className }: StatCardProps) {
   return (
     <Card className={cn('relative overflow-hidden', className)}>
       <CardContent className="p-6">
@@ -27,6 +29,15 @@ export function StatCard({ title, value, icon: Icon, description, className }: S
             <Icon className="w-6 h-6 text-accent" />
           </div>
         </div>
+        {link && (
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <Button variant="ghost" size="sm" asChild className="p-0 h-auto hover:bg-transparent text-accent hover:text-accent/80 transition-colors">
+              <Link to={link} className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider">
+                View All <ArrowRight className="w-3 h-3" />
+              </Link>
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

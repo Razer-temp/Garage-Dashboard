@@ -41,22 +41,26 @@ export default function Dashboard() {
                 title="Total Customers"
                 value={stats?.totalCustomers ?? 0}
                 icon={Users}
+                link="/customers"
               />
               <StatCard
                 title="Active Jobs"
                 value={stats?.activeJobs ?? 0}
                 icon={Briefcase}
+                link="/jobs?status=pending,in_progress"
               />
               <StatCard
                 title="Pending Payments"
                 value={stats?.pendingPayments ?? 0}
                 icon={CreditCard}
+                link="/pending-payments"
               />
               <StatCard
                 title="Service Reminders"
                 value={stats?.upcomingReminders ?? 0}
                 icon={Bell}
                 description="Next 30 days"
+                link="/reminders"
               />
             </>
           )}

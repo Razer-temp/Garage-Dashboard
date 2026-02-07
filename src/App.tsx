@@ -15,6 +15,7 @@ import NewCustomer from "./pages/NewCustomer";
 import CustomerDetail from "./pages/CustomerDetail";
 import EditCustomer from "./pages/EditCustomer";
 import Jobs from "./pages/Jobs";
+import PendingPayments from "./pages/PendingPayments";
 import NewJob from "./pages/NewJob";
 import JobDetail from "./pages/JobDetail";
 import Reminders from "./pages/Reminders";
@@ -85,6 +86,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Jobs />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pending-payments"
+                element={
+                  <ProtectedRoute>
+                    <PendingPayments />
                   </ProtectedRoute>
                 }
               />
