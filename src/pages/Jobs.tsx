@@ -134,15 +134,29 @@ export default function Jobs() {
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-1 text-right">
-                        <p className="text-lg font-semibold">
-                          ₹{job.final_total?.toLocaleString() ?? job.estimated_cost?.toLocaleString() ?? '0'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(job.date_in), 'MMM d, yyyy')}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(job.date_in), { addSuffix: true })}
-                        </p>
+                        {(() => {
+                          const total = job.final_total ?? (job.estimated_cost ?? 0);
+                          const paid = job.paid_amount ?? 0;
+                          const balance = total - paid;
+                          return (
+                            <>
+                              <p className="text-sm font-medium text-muted-foreground">
+                                Total: ₹{total.toLocaleString()}
+                              </p>
+                              <p className="text-sm font-medium text-success">
+                                Paid: ₹{paid.toLocaleString()}
+                              </p>
+                              <div className="bg-warning/10 px-2 py-0.5 rounded border border-warning/20">
+                                <p className="text-base font-bold text-warning leading-none">
+                                  Due: ₹{balance.toLocaleString()}
+                                </p>
+                              </div>
+                              <p className="text-[10px] text-muted-foreground mt-1">
+                                {format(new Date(job.date_in), 'MMM d, yyyy')}
+                              </p>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   </CardContent>

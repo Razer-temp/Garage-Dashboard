@@ -98,7 +98,17 @@ export default function JobDetail() {
   };
 
   const handlePaymentChange = (payment_status: PaymentStatus) => {
-    updateJob.mutate({ id: id!, payment_status });
+    const total = job?.final_total ?? (job?.estimated_cost ?? 0);
+    const updates: any = { id: id!, payment_status };
+
+    if (payment_status === 'paid') {
+      updates.paid_amount = total;
+    } else if (payment_status === 'pending') {
+      updates.paid_amount = 0;
+    }
+    // For 'partial', we let the user input it via the inline field
+
+    updateJob.mutate(updates);
   };
 
   const openEditDialog = () => {
@@ -326,18 +336,49 @@ export default function JobDetail() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Payment Status</Label>
-                <Select value={job.payment_status} onValueChange={(v) => handlePaymentChange(v as PaymentStatus)}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Unpaid</SelectItem>
-                    <SelectItem value="partial">Partial</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex flex-wrap items-end gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Payment Status</Label>
+                  <Select value={job.payment_status} onValueChange={(v) => handlePaymentChange(v as PaymentStatus)}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Unpaid</SelectItem>
+                      <SelectItem value="partial">Partial</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {job.payment_status === 'partial' && (
+                  <div className="space-y-2 animate-in slide-in-from-left-2 duration-300">
+                    <Label className="text-xs text-warning font-bold">Amount Paid (₹)</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        defaultValue={job.paid_amount || 0}
+                        className="w-32 h-10 font-bold border-warning/50 focus:ring-warning"
+                        onBlur={(e) => {
+                          const val = parseFloat(e.target.value) || 0;
+                          if (val !== job.paid_amount) {
+                            updateJob.mutate({ id: id!, paid_amount: val });
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const val = parseFloat((e.target as HTMLInputElement).value) || 0;
+                            updateJob.mutate({ id: id!, paid_amount: val });
+                            (e.target as HTMLInputElement).blur();
+                          }
+                        }}
+                      />
+                      <span className="text-[10px] text-muted-foreground w-20 leading-tight">
+                        Press Enter to save
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
