@@ -1,12 +1,13 @@
 import { format } from 'date-fns';
-import { JobWithDetails, GarageSettings } from '@/types/database';
+import { JobPart, JobWithDetails, GarageSettings } from '@/types/database';
 
 interface InvoicePrintProps {
     job: JobWithDetails;
     settings?: GarageSettings | null;
+    parts?: JobPart[];
 }
 
-export function InvoicePrint({ job, settings }: InvoicePrintProps) {
+export function InvoicePrint({ job, settings, parts }: InvoicePrintProps) {
     const laborCost = job.labor_cost ?? 0;
     const partsCost = (job.final_total ?? 0) - laborCost - (job.gst_amount ?? 0);
     const total = job.final_total ?? 0;
@@ -84,7 +85,18 @@ export function InvoicePrint({ job, settings }: InvoicePrintProps) {
                     <tr>
                         <td className="border border-gray-300 p-3 min-h-[100px] align-top">
                             <p className="font-bold mb-1">Parts & Consumables</p>
-                            <p className="text-xs text-gray-600 italic whitespace-pre-line">{job.parts_used || 'General items'}</p>
+                            {parts && parts.length > 0 ? (
+                                <div className="space-y-1">
+                                    {parts.map((part, i) => (
+                                        <div key={i} className="text-xs flex justify-between">
+                                            <span>{part.item_name} (x{part.quantity})</span>
+                                            <span>₹{((part.quantity || 0) * (part.unit_price || 0)).toLocaleString()}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-gray-600 italic whitespace-pre-line">{job.parts_used || 'General items'}</p>
+                            )}
                         </td>
                         <td className="border border-gray-300 p-3 text-right align-top">
                             {partsCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}

@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Phone, MessageCircle, Bike, Calendar, Clock, Loader2, Printer, Pencil, Trash2, Sparkles, CheckCircle2, Boxes, Plus } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
+import JobPartsForm from '@/components/JobPartsForm';
+import { useJobParts, useSyncJobParts } from '@/hooks/useJobParts';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -63,6 +66,9 @@ export default function JobDetail() {
   const updateJob = useUpdateJob();
   const deleteJob = useDeleteJob();
   const generateInvoice = useGenerateInvoice();
+  const { user } = useAuth();
+  const { data: jobParts, isLoading: isPartsLoading } = useJobParts(id!);
+  const syncJobParts = useSyncJobParts();
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -83,6 +89,7 @@ export default function JobDetail() {
     applied_package_name: null as string | null,
     paid_amount: '0',
   });
+  const [parts, setParts] = useState<any[]>([]);
 
   const handleStatusChange = (status: JobStatus) => {
     const updates: { id: string; status: JobStatus; date_out?: string } = {
@@ -128,6 +135,12 @@ export default function JobDetail() {
         applied_package_name: job.applied_package_name || null,
         paid_amount: job.paid_amount?.toString() || '0',
       });
+      setParts(jobParts?.map(p => ({
+        item_name: p.item_name,
+        quantity: p.quantity?.toString() || '1',
+        unit_price: p.unit_price?.toString() || '0',
+        inventory_item_id: p.inventory_item_id
+      })) || []);
       setShowEditDialog(true);
     }
   };
@@ -158,6 +171,15 @@ export default function JobDetail() {
         applied_package_id: pkg.id,
         applied_package_name: pkg.name
       });
+
+      const pkgParts = (pkg.items || []).map(item => ({
+        item_name: item.item_name,
+        quantity: item.quantity?.toString() || '1',
+        unit_price: item.unit_price?.toString() || '0',
+        inventory_item_id: item.inventory_item_id
+      }));
+      setParts(pkgParts);
+
       setPackageOpen(false);
     };
 
@@ -180,7 +202,22 @@ export default function JobDetail() {
         paid_amount: parseFloat(editForm.paid_amount) || 0,
       },
       {
-        onSuccess: () => setShowEditDialog(false),
+        onSuccess: () => {
+          // Sync structured parts
+          if (user) {
+            syncJobParts.mutate({
+              jobId: id!,
+              userId: user.id,
+              parts: parts.map(p => ({
+                item_name: p.item_name,
+                quantity: parseInt(p.quantity) || 0,
+                unit_price: parseFloat(p.unit_price) || 0,
+                inventory_item_id: p.inventory_item_id
+              }))
+            });
+          }
+          setShowEditDialog(false);
+        },
       }
     );
   };
@@ -414,12 +451,24 @@ export default function JobDetail() {
                 <Label className="text-xs text-muted-foreground">Problem Description</Label>
                 <p className="mt-1">{job.problem_description}</p>
               </div>
-              {job.parts_used && (
+              {jobParts && jobParts.length > 0 ? (
                 <div>
                   <Label className="text-xs text-muted-foreground">Parts Used</Label>
-                  <p className="mt-1 whitespace-pre-line">{job.parts_used}</p>
+                  <div className="mt-2 space-y-2">
+                    {jobParts.map((part, i) => (
+                      <div key={part.id || i} className="flex justify-between text-sm py-1 border-b border-border/30 last:border-0">
+                        <span>{part.item_name} <span className="text-muted-foreground lowercase">x{part.quantity}</span></span>
+                        <span className="font-medium">₹{((part.quantity || 0) * (part.unit_price || 0)).toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              )}
+              ) : job.parts_used ? (
+                <div>
+                  <Label className="text-xs text-muted-foreground">Parts Used (Notes)</Label>
+                  <p className="mt-1 whitespace-pre-line text-sm">{job.parts_used}</p>
+                </div>
+              ) : null}
               {job.mechanic_notes && (
                 <div>
                   <Label className="text-xs text-muted-foreground">Mechanic Notes</Label>
@@ -594,13 +643,28 @@ export default function JobDetail() {
                   className="text-sm"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Parts Used</Label>
-                <Textarea
-                  value={editForm.parts_used}
-                  onChange={(e) => setEditForm({ ...editForm, parts_used: e.target.value })}
-                  rows={2}
+              <div className="space-y-4 pt-4 border-t">
+                <JobPartsForm
+                  parts={parts}
+                  onChange={(newParts) => {
+                    setParts(newParts);
+                    // Update total based on parts
+                    const partsTotal = newParts.reduce((sum, p) => sum + ((parseFloat(p.quantity) || 0) * (parseFloat(p.unit_price) || 0)), 0);
+                    const labor = parseFloat(editForm.labor_cost) || 0;
+                    const discount = parseFloat(editForm.discount_amount) || 0;
+                    setEditForm({ ...editForm, final_total: (labor + partsTotal - discount).toString() });
+                  }}
                 />
+
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Additional Parts Notes</Label>
+                  <Textarea
+                    value={editForm.parts_used}
+                    onChange={(e) => setEditForm({ ...editForm, parts_used: e.target.value })}
+                    rows={2}
+                    className="text-sm"
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -733,14 +797,14 @@ export default function JobDetail() {
               </DialogTitle>
             </DialogHeader>
             <div className="bg-muted p-4 rounded-lg print:p-0 print:bg-white">
-              <InvoicePrint job={job} settings={settings} />
+              <InvoicePrint job={job} settings={settings} parts={jobParts || []} />
             </div>
           </DialogContent>
         </Dialog>
 
         {/* Print rendering container (only for direct print if needed, but handled by Dialog now) */}
         <div className="hidden print:block fixed inset-0 bg-white z-[9999]">
-          <InvoicePrint job={job} settings={settings} />
+          <InvoicePrint job={job} settings={settings} parts={jobParts || []} />
         </div>
       </div>
     </AppLayout >

@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Briefcase, Bell, LogOut, Wrench, Menu, Settings as SettingsIcon, BarChart, Plus,
-  Boxes, Search, ArrowLeft, Loader2, Sparkles, CheckCircle2
+  Boxes, Search, ArrowLeft, Loader2, Sparkles, CheckCircle2, Trash2
 } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
+import JobPartsForm from '@/components/JobPartsForm';
+import { useAddJobPart, useSyncJobParts } from '@/hooks/useJobParts';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -69,6 +72,7 @@ export default function NewJob() {
     applied_package_name: null as string | null,
     paid_amount: '0',
   });
+  const [parts, setParts] = useState<any[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleApplyPackage = (pkgId: string) => {
@@ -87,6 +91,15 @@ export default function NewJob() {
       applied_package_id: pkg.id,
       applied_package_name: pkg.name
     });
+
+    const pkgParts = (pkg.items || []).map(item => ({
+      item_name: item.item_name,
+      quantity: item.quantity?.toString() || '1',
+      unit_price: item.unit_price?.toString() || '0',
+      inventory_item_id: item.inventory_item_id
+    }));
+    setParts(pkgParts);
+
     setPackageOpen(false);
   };
 
@@ -148,7 +161,26 @@ export default function NewJob() {
         paid_amount: parseFloat(formData.paid_amount) || 0,
       },
       {
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
+          // Save structured parts
+          if (parts.length > 0) {
+            const formattedParts = parts.map(p => ({
+              item_name: p.item_name,
+              quantity: parseInt(p.quantity) || 0,
+              unit_price: parseFloat(p.unit_price) || 0,
+              inventory_item_id: p.inventory_item_id
+            }));
+
+            // Using sync mutator to handle bulk insert
+            const { error: partsError } = await supabase
+              .from('job_parts')
+              .insert(formattedParts.map(p => ({ ...p, job_id: data.id, user_id: user.id })));
+
+            if (partsError) {
+              console.error('Error saving parts:', partsError);
+              // We don't block navigation, but ideally we'd show a toast
+            }
+          }
           navigate(`/jobs/${data.id}`);
         },
       }
@@ -378,15 +410,28 @@ export default function NewJob() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="parts" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Initial Parts List</Label>
-                <Textarea
-                  id="parts"
-                  placeholder="List any parts known to be needed..."
-                  value={formData.parts_used}
-                  onChange={(e) => setFormData({ ...formData, parts_used: e.target.value })}
-                  rows={3}
+              <div className="space-y-4 pt-4 border-t">
+                <JobPartsForm
+                  parts={parts}
+                  onChange={(newParts) => {
+                    setParts(newParts);
+                    // Optionally update estimated cost based on parts
+                    const partsTotal = newParts.reduce((sum, p) => sum + ((parseFloat(p.quantity) || 0) * (parseFloat(p.unit_price) || 0)), 0);
+                    const labor = parseFloat(formData.labor_cost) || 0;
+                    setFormData({ ...formData, estimated_cost: (labor + partsTotal).toString() });
+                  }}
                 />
+
+                <div className="space-y-2">
+                  <Label htmlFor="parts" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Additional Parts Notes</Label>
+                  <Textarea
+                    id="parts"
+                    placeholder="List any other parts known to be needed..."
+                    value={formData.parts_used}
+                    onChange={(e) => setFormData({ ...formData, parts_used: e.target.value })}
+                    rows={2}
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
