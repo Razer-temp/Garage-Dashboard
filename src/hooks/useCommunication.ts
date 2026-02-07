@@ -8,10 +8,12 @@ import {
     CommunicationLogInsert
 } from '@/types/database';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useTemplates() {
+    const { user } = useAuth();
     return useQuery({
-        queryKey: ['communication-templates'],
+        queryKey: ['communication-templates', user?.id],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('communication_templates')
@@ -96,8 +98,9 @@ export function useDeleteTemplate() {
 }
 
 export function useCommunicationLogs(customerId: string) {
+    const { user } = useAuth();
     return useQuery({
-        queryKey: ['communication-logs', customerId],
+        queryKey: ['communication-logs', user?.id, customerId],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('communication_logs')

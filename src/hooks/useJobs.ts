@@ -2,10 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Job, JobWithDetails, JobStatus, PaymentStatus, JobInsert, JobUpdate } from '@/types/database';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useJobs(status?: JobStatus) {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ['jobs', status],
+    queryKey: ['jobs', user?.id, status],
     queryFn: async () => {
       let query = supabase
         .from('jobs')
@@ -31,8 +33,9 @@ export function useJobs(status?: JobStatus) {
 }
 
 export function useJob(id: string) {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ['jobs', id],
+    queryKey: ['jobs', user?.id, id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('jobs')
@@ -54,8 +57,9 @@ export function useJob(id: string) {
 }
 
 export function useJobsByBike(bikeId: string) {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ['jobs', 'bike', bikeId],
+    queryKey: ['jobs', user?.id, 'bike', bikeId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('jobs')
@@ -146,8 +150,9 @@ export function useDeleteJob() {
 }
 
 export function useUpcomingReminders() {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ['reminders'],
+    queryKey: ['reminders', user?.id],
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0];
       const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];

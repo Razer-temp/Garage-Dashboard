@@ -8,10 +8,12 @@ import {
     ServicePackageItemInsert
 } from '@/types/database';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useServicePackages() {
+    const { user } = useAuth();
     return useQuery({
-        queryKey: ['service-packages'],
+        queryKey: ['service-packages', user?.id],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('service_packages')
@@ -25,8 +27,9 @@ export function useServicePackages() {
 }
 
 export function useServicePackage(id: string | null) {
+    const { user } = useAuth();
     return useQuery({
-        queryKey: ['service-package', id],
+        queryKey: ['service-package', user?.id, id],
         queryFn: async () => {
             if (!id) return null;
             const { data, error } = await supabase

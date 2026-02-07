@@ -2,10 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { InventoryItem, InventoryItemInsert, InventoryItemUpdate } from '@/types/database';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useInventory() {
+    const { user } = useAuth();
     return useQuery({
-        queryKey: ['inventory'],
+        queryKey: ['inventory', user?.id],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('inventory_items')

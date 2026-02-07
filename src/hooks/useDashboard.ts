@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardStats } from '@/types/database';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useDashboardStats() {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ['dashboard', 'stats'],
+    queryKey: ['dashboard', user?.id, 'stats'],
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0];
       const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];

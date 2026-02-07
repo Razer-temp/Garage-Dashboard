@@ -2,10 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { GarageSettings, GarageSettingsUpdate } from '@/types/database';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useSettings() {
+    const { user } = useAuth();
     return useQuery({
-        queryKey: ['garage-settings'],
+        queryKey: ['garage-settings', user?.id],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('garage_settings')

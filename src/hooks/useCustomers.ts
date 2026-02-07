@@ -2,16 +2,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Customer } from '@/types/database';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useCustomers() {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ['customers'],
+    queryKey: ['customers', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('customers')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       return data as Customer[];
     },
@@ -19,15 +21,16 @@ export function useCustomers() {
 }
 
 export function useCustomer(id: string) {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ['customers', id],
+    queryKey: ['customers', user?.id, id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('customers')
         .select('*, bikes(*)')
         .eq('id', id)
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -45,7 +48,7 @@ export function useCreateCustomer() {
         .insert(customer)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -70,7 +73,7 @@ export function useUpdateCustomer() {
         .eq('id', id)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -94,7 +97,7 @@ export function useDeleteCustomer() {
         .from('customers')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
