@@ -67,6 +67,7 @@ export default function NewJob() {
     set_reminder: true,
     applied_package_id: null as string | null,
     applied_package_name: null as string | null,
+    paid_amount: '0',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -144,6 +145,7 @@ export default function NewJob() {
         applied_package_name: formData.applied_package_name,
         next_service_date: nextServiceDate,
         next_service_mileage: null,
+        paid_amount: parseFloat(formData.paid_amount) || 0,
       },
       {
         onSuccess: (data) => {
@@ -358,6 +360,20 @@ export default function NewJob() {
                       onChange={(e) => setFormData({ ...formData, estimated_cost: e.target.value })}
                       className="font-bold text-primary"
                     />
+                  </div>
+                </div>
+                <div className="p-4 bg-muted/50 rounded-xl border border-warning/20 mt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="paid" className="text-sm font-bold uppercase tracking-wider text-warning">Advance Payment / Amount Paid (₹)</Label>
+                    <Input
+                      id="paid"
+                      type="number"
+                      placeholder="0"
+                      value={formData.paid_amount}
+                      onChange={(e) => setFormData({ ...formData, paid_amount: e.target.value })}
+                      className="font-bold border-warning/50 focus:ring-warning"
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-1">Enter any advance payment received now.</p>
                   </div>
                 </div>
               </div>

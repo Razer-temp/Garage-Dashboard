@@ -343,6 +343,7 @@ export type Database = {
           user_id: string
           applied_package_id: string | null
           applied_package_name: string | null
+          paid_amount: number | null
         }
         Insert: {
           bike_id: string
@@ -370,6 +371,7 @@ export type Database = {
           user_id: string
           applied_package_id?: string | null
           applied_package_name?: string | null
+          paid_amount?: number | null
         }
         Update: {
           bike_id?: string
@@ -397,6 +399,7 @@ export type Database = {
           user_id?: string
           applied_package_id?: string | null
           applied_package_name?: string | null
+          paid_amount?: number | null
         }
         Relationships: [
           {
