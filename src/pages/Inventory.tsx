@@ -42,14 +42,14 @@ export default function Inventory() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
-    const [formData, setFormData] = useState<Partial<InventoryItemInsert>>({
+    const [formData, setFormData] = useState({
         name: '',
         code: '',
         description: '',
-        stock_quantity: 0,
-        min_stock_level: 5,
-        cost_price: 0,
-        selling_price: 0
+        stock_quantity: '0',
+        min_stock_level: '0',
+        cost_price: '0',
+        selling_price: '0'
     });
 
     const filteredInventory = inventory?.filter(item =>
@@ -63,10 +63,10 @@ export default function Inventory() {
             name: '',
             code: '',
             description: '',
-            stock_quantity: 0,
-            min_stock_level: 5,
-            cost_price: 0,
-            selling_price: 0
+            stock_quantity: '',
+            min_stock_level: '',
+            cost_price: '',
+            selling_price: ''
         });
         setIsDialogOpen(true);
     };
@@ -77,10 +77,10 @@ export default function Inventory() {
             name: item.name,
             code: item.code || '',
             description: item.description || '',
-            stock_quantity: item.stock_quantity ?? 0,
-            min_stock_level: item.min_stock_level ?? 0,
-            cost_price: item.cost_price ?? 0,
-            selling_price: item.selling_price ?? 0
+            stock_quantity: item.stock_quantity?.toString() || '0',
+            min_stock_level: item.min_stock_level?.toString() || '0',
+            cost_price: item.cost_price?.toString() || '0',
+            selling_price: item.selling_price?.toString() || '0'
         });
         setIsDialogOpen(true);
     };
@@ -89,17 +89,27 @@ export default function Inventory() {
         e.preventDefault();
         if (!user) return;
 
+        const submissionData = {
+            name: formData.name,
+            code: formData.code || null,
+            description: formData.description || null,
+            stock_quantity: parseInt(formData.stock_quantity) || 0,
+            min_stock_level: parseInt(formData.min_stock_level) || 0,
+            cost_price: parseFloat(formData.cost_price) || 0,
+            selling_price: parseFloat(formData.selling_price) || 0
+        };
+
         if (editingItem) {
             updateItem.mutate({
                 id: editingItem.id,
-                ...formData as InventoryItemUpdate
+                ...submissionData
             }, {
                 onSuccess: () => setIsDialogOpen(false)
             });
         } else {
             createItem.mutate({
                 user_id: user.id,
-                ...formData as InventoryItemInsert
+                ...submissionData
             }, {
                 onSuccess: () => setIsDialogOpen(false)
             });
@@ -270,7 +280,7 @@ export default function Inventory() {
                                         id="stock"
                                         type="number"
                                         value={formData.stock_quantity}
-                                        onChange={(e) => setFormData({ ...formData, stock_quantity: parseInt(e.target.value) || 0 })}
+                                        onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
                                         required
                                     />
                                 </div>
@@ -282,7 +292,7 @@ export default function Inventory() {
                                         id="cost"
                                         type="number"
                                         value={formData.cost_price}
-                                        onChange={(e) => setFormData({ ...formData, cost_price: parseFloat(e.target.value) || 0 })}
+                                        onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -291,7 +301,7 @@ export default function Inventory() {
                                         id="selling"
                                         type="number"
                                         value={formData.selling_price}
-                                        onChange={(e) => setFormData({ ...formData, selling_price: parseFloat(e.target.value) || 0 })}
+                                        onChange={(e) => setFormData({ ...formData, selling_price: e.target.value })}
                                         required
                                     />
                                 </div>
@@ -302,7 +312,7 @@ export default function Inventory() {
                                     id="min"
                                     type="number"
                                     value={formData.min_stock_level}
-                                    onChange={(e) => setFormData({ ...formData, min_stock_level: parseInt(e.target.value) || 0 })}
+                                    onChange={(e) => setFormData({ ...formData, min_stock_level: e.target.value })}
                                 />
                             </div>
                             <DialogFooter className="pt-4">

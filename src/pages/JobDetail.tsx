@@ -116,10 +116,10 @@ export default function JobDetail() {
       setEditForm({
         problem_description: job.problem_description || '',
         parts_used: job.parts_used || '',
-        labor_cost: job.labor_cost === 0 ? '' : job.labor_cost?.toString() || '',
-        final_total: job.final_total === 0 ? '' : job.final_total?.toString() || '',
-        gst_percent: job.gst_percent === 0 ? '' : job.gst_percent?.toString() || '',
-        discount_amount: job.discount_amount === 0 ? '' : job.discount_amount?.toString() || '',
+        labor_cost: job.labor_cost?.toString() || '0',
+        final_total: job.final_total?.toString() || '0',
+        gst_percent: job.gst_percent?.toString() || '0',
+        discount_amount: job.discount_amount?.toString() || '0',
         mechanic_notes: job.mechanic_notes || '',
         next_service_date: job.next_service_date || '',
         next_service_mileage: job.next_service_mileage?.toString() || '',
@@ -357,24 +357,15 @@ export default function JobDetail() {
                     <div className="flex items-center gap-2">
                       <Input
                         type="number"
-                        defaultValue={job.paid_amount || 0}
+                        value={job.paid_amount || 0}
                         className="w-32 h-10 font-bold border-warning/50 focus:ring-warning"
-                        onBlur={(e) => {
-                          const val = parseFloat(e.target.value) || 0;
-                          if (val !== job.paid_amount) {
-                            updateJob.mutate({ id: id!, paid_amount: val });
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            const val = parseFloat((e.target as HTMLInputElement).value) || 0;
-                            updateJob.mutate({ id: id!, paid_amount: val });
-                            (e.target as HTMLInputElement).blur();
-                          }
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                          updateJob.mutate({ id: id!, paid_amount: val });
                         }}
                       />
                       <span className="text-[10px] text-muted-foreground w-20 leading-tight">
-                        Press Enter to save
+                        Auto-saves on change
                       </span>
                     </div>
                   </div>

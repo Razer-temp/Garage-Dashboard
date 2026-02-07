@@ -41,35 +41,35 @@ export default function ServicePackageForm({
     title
 }: ServicePackageFormProps) {
     const { data: inventory } = useInventory();
-    const [pkgData, setPkgData] = useState<Partial<ServicePackageInsert>>({
+    const [pkgData, setPkgData] = useState({
         name: initialData?.name || '',
         description: initialData?.description || '',
         category: initialData?.category || '',
-        labor_charge: initialData?.labor_charge || 0,
+        labor_charge: initialData?.labor_charge?.toString() || '0',
         gst_applicable: initialData?.gst_applicable ?? true,
         estimated_time: initialData?.estimated_time || '',
         checklist_items: (initialData?.checklist_items as string[]) || [],
     });
 
-    const [items, setItems] = useState<ServicePackageItemInsert[]>(
+    const [items, setItems] = useState<any[]>(
         initialData?.items.map(item => ({
             item_name: item.item_name,
-            quantity: item.quantity || 1,
-            unit_price: item.unit_price || 0,
+            quantity: item.quantity?.toString() || '1',
+            unit_price: item.unit_price?.toString() || '0',
             inventory_item_id: item.inventory_item_id,
             package_id: item.package_id
         })) || []
     );
 
     const addItem = () => {
-        setItems([...items, { item_name: '', quantity: 1, unit_price: 0, package_id: '' }]);
+        setItems([...items, { item_name: '', quantity: '1', unit_price: '0', package_id: '' }]);
     };
 
     const removeItem = (index: number) => {
         setItems(items.filter((_, i) => i !== index));
     };
 
-    const updateItem = (index: number, updates: Partial<ServicePackageItemInsert>) => {
+    const updateItem = (index: number, updates: any) => {
         const newItems = [...items];
         newItems[index] = { ...newItems[index], ...updates };
         setItems(newItems);
@@ -88,9 +88,22 @@ export default function ServicePackageForm({
             ...cleanPkg
         } = pkgData as any;
 
+        const submissionPkg = {
+            ...cleanPkg,
+            labor_charge: parseFloat(pkgData.labor_charge) || 0
+        };
+
+        const submissionItems = items.map(item => ({
+            item_name: item.item_name,
+            quantity: parseInt(item.quantity) || 0,
+            unit_price: parseFloat(item.unit_price) || 0,
+            inventory_item_id: item.inventory_item_id || null,
+            package_id: ''
+        }));
+
         onSubmit({
-            package: cleanPkg as ServicePackageInsert,
-            items: items.map(item => ({ ...item, package_id: '' }))
+            package: submissionPkg as ServicePackageInsert,
+            items: submissionItems as ServicePackageItemInsert[]
         });
     };
 
@@ -137,8 +150,8 @@ export default function ServicePackageForm({
                         <Input
                             id="labor"
                             type="number"
-                            value={pkgData.labor_charge === 0 ? '' : pkgData.labor_charge}
-                            onChange={(e) => setPkgData({ ...pkgData, labor_charge: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
+                            value={pkgData.labor_charge}
+                            onChange={(e) => setPkgData({ ...pkgData, labor_charge: e.target.value })}
                             placeholder="0"
                         />
                     </div>
@@ -242,8 +255,8 @@ export default function ServicePackageForm({
                             <div className="col-span-4 md:col-span-2">
                                 <Input
                                     type="number"
-                                    value={item.quantity === 0 ? '' : item.quantity}
-                                    onChange={(e) => updateItem(index, { quantity: e.target.value === '' ? 0 : parseInt(e.target.value) })}
+                                    value={item.quantity}
+                                    onChange={(e) => updateItem(index, { quantity: e.target.value })}
                                     placeholder="Qty"
                                     min="0"
                                 />
@@ -251,8 +264,8 @@ export default function ServicePackageForm({
                             <div className="col-span-6 md:col-span-3">
                                 <Input
                                     type="number"
-                                    value={item.unit_price === 0 ? '' : item.unit_price}
-                                    onChange={(e) => updateItem(index, { unit_price: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
+                                    value={item.unit_price}
+                                    onChange={(e) => updateItem(index, { unit_price: e.target.value })}
                                     placeholder="Price"
                                 />
                             </div>
@@ -279,7 +292,7 @@ export default function ServicePackageForm({
 
             <div className="flex justify-end gap-3 pt-6 border-t font-semibold">
                 <div className="mr-auto text-lg">
-                    Total: ₹{((pkgData.labor_charge || 0) + items.reduce((sum, item) => sum + ((item.quantity || 0) * (item.unit_price || 0)), 0)).toLocaleString()}
+                    Total: ₹{((parseFloat(pkgData.labor_charge) || 0) + items.reduce((sum, item) => sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0)), 0)).toLocaleString()}
                 </div>
                 <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
                     Cancel
