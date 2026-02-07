@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +32,7 @@ import { InventoryItemInsert, InventoryItemUpdate } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Inventory() {
+    const navigate = useNavigate();
     const { user } = useAuth();
     const { data: inventory, isLoading } = useInventory();
     const createItem = useCreateInventoryItem();
@@ -75,10 +77,10 @@ export default function Inventory() {
             name: item.name,
             code: item.code || '',
             description: item.description || '',
-            stock_quantity: item.stock_quantity || 0,
-            min_stock_level: item.min_stock_level || 5,
-            cost_price: item.cost_price || 0,
-            selling_price: item.selling_price || 0
+            stock_quantity: item.stock_quantity ?? 0,
+            min_stock_level: item.min_stock_level ?? 0,
+            cost_price: item.cost_price ?? 0,
+            selling_price: item.selling_price ?? 0
         });
         setIsDialogOpen(true);
     };
@@ -139,11 +141,11 @@ export default function Inventory() {
                         </CardHeader>
                         <CardContent>
                             <p className="text-3xl font-bold text-amber-500">
-                                {inventory?.filter(i => (i.stock_quantity || 0) <= (i.min_stock_level || 0)).length || 0}
+                                {inventory?.filter(i => (i.stock_quantity ?? 0) < (i.min_stock_level ?? 0)).length || 0}
                             </p>
                         </CardContent>
                     </Card>
-                    <Card className="bg-primary/10 border-primary/30 shadow-glow cursor-pointer hover:scale-[1.02] transition-transform" onClick={() => (window.location.hash = 'packages')}>
+                    <Card className="bg-primary/10 border-primary/30 shadow-glow cursor-pointer hover:scale-[1.02] transition-transform" onClick={() => navigate('/packages')}>
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-medium text-muted-foreground uppercase flex items-center gap-2">
                                 <Boxes className="w-4 h-4 text-primary" />
@@ -203,11 +205,11 @@ export default function Inventory() {
                                             </td>
                                             <td className="p-4">
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`w-2 h-2 rounded-full ${(item.stock_quantity || 0) <= (item.min_stock_level || 0) ? 'bg-amber-500 animate-pulse' : 'bg-green-500'}`} />
-                                                    <span className={`font-bold ${(item.stock_quantity || 0) <= (item.min_stock_level || 0) ? 'text-amber-500' : ''}`}>
-                                                        {item.stock_quantity} in stock
+                                                    <span className={`w-2 h-2 rounded-full ${(item.stock_quantity ?? 0) < (item.min_stock_level ?? 0) ? 'bg-amber-500 animate-pulse' : 'bg-green-500'}`} />
+                                                    <span className={`font-bold ${(item.stock_quantity ?? 0) < (item.min_stock_level ?? 0) ? 'text-amber-500' : ''}`}>
+                                                        {item.stock_quantity ?? 0} in stock
                                                     </span>
-                                                    <span className="text-xs text-muted-foreground">(Min: {item.min_stock_level})</span>
+                                                    <span className="text-xs text-muted-foreground">(Min: {item.min_stock_level ?? 0})</span>
                                                 </div>
                                             </td>
                                             <td className="p-4">
@@ -267,7 +269,7 @@ export default function Inventory() {
                                     <Input
                                         id="stock"
                                         type="number"
-                                        value={formData.stock_quantity === 0 ? '' : formData.stock_quantity}
+                                        value={formData.stock_quantity}
                                         onChange={(e) => setFormData({ ...formData, stock_quantity: parseInt(e.target.value) || 0 })}
                                         required
                                     />
@@ -279,7 +281,7 @@ export default function Inventory() {
                                     <Input
                                         id="cost"
                                         type="number"
-                                        value={formData.cost_price === 0 ? '' : formData.cost_price}
+                                        value={formData.cost_price}
                                         onChange={(e) => setFormData({ ...formData, cost_price: parseFloat(e.target.value) || 0 })}
                                     />
                                 </div>
@@ -288,7 +290,7 @@ export default function Inventory() {
                                     <Input
                                         id="selling"
                                         type="number"
-                                        value={formData.selling_price === 0 ? '' : formData.selling_price}
+                                        value={formData.selling_price}
                                         onChange={(e) => setFormData({ ...formData, selling_price: parseFloat(e.target.value) || 0 })}
                                         required
                                     />
