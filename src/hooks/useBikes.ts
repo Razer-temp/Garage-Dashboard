@@ -1,0 +1,115 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Bike } from '@/types/database';
+import { toast } from 'sonner';
+
+export function useBikes(customerId?: string) {
+  return useQuery({
+    queryKey: ['bikes', customerId],
+    queryFn: async () => {
+      let query = supabase.from('bikes').select('*');
+      
+      if (customerId) {
+        query = query.eq('customer_id', customerId);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as Bike[];
+    },
+    enabled: customerId !== undefined,
+  });
+}
+
+export function useBike(id: string) {
+  return useQuery({
+    queryKey: ['bikes', 'single', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bikes')
+        .select('*, customer:customers(*)')
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useCreateBike() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (bike: Omit<Bike, 'id' | 'created_at' | 'updated_at'>) => {
+      const { data, error } = await supabase
+        .from('bikes')
+        .insert(bike)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['bikes'] });
+      queryClient.invalidateQueries({ queryKey: ['customers', data.customer_id] });
+      toast.success('Bike added successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to add bike: ' + error.message);
+    },
+  });
+}
+
+export function useUpdateBike() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Bike> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('bikes')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['bikes'] });
+      queryClient.invalidateQueries({ queryKey: ['bikes', 'single', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['customers', data.customer_id] });
+      toast.success('Bike updated successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to update bike: ' + error.message);
+    },
+  });
+}
+
+export function useDeleteBike() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('bikes')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bikes'] });
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      toast.success('Bike deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete bike: ' + error.message);
+    },
+  });
+}
