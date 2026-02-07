@@ -12,11 +12,13 @@ export function useCustomers() {
       const { data, error } = await supabase
         .from('customers')
         .select('*')
+        .eq('user_id', user?.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data as Customer[];
     },
+    enabled: !!user?.id,
   });
 }
 
@@ -29,12 +31,13 @@ export function useCustomer(id: string) {
         .from('customers')
         .select('*, bikes(*)')
         .eq('id', id)
+        .eq('user_id', user?.id)
         .single();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !!id && !!user?.id,
   });
 }
 

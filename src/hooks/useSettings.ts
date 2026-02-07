@@ -12,6 +12,7 @@ export function useSettings() {
             const { data, error } = await supabase
                 .from('garage_settings')
                 .select('*')
+                .eq('user_id', user?.id)
                 .single();
 
             if (error) {
@@ -23,6 +24,7 @@ export function useSettings() {
             }
             return data as GarageSettings;
         },
+        enabled: !!user?.id,
     });
 }
 

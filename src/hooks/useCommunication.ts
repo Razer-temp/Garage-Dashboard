@@ -18,11 +18,13 @@ export function useTemplates() {
             const { data, error } = await supabase
                 .from('communication_templates')
                 .select('*')
+                .eq('user_id', user?.id)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
             return data as CommunicationTemplate[];
         },
+        enabled: !!user?.id,
     });
 }
 
@@ -106,11 +108,13 @@ export function useCommunicationLogs(customerId: string) {
                 .from('communication_logs')
                 .select('*')
                 .eq('customer_id', customerId)
+                .eq('user_id', user?.id)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
             return data as CommunicationLog[];
         },
+        enabled: !!user?.id,
     });
 }
 

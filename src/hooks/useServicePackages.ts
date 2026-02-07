@@ -18,11 +18,13 @@ export function useServicePackages() {
             const { data, error } = await supabase
                 .from('service_packages')
                 .select('*, items:service_package_items(*)')
+                .eq('user_id', user?.id)
                 .order('name', { ascending: true });
 
             if (error) throw error;
             return data as ServicePackageWithItems[];
         },
+        enabled: !!user?.id,
     });
 }
 
@@ -36,12 +38,13 @@ export function useServicePackage(id: string | null) {
                 .from('service_packages')
                 .select('*, items:service_package_items(*)')
                 .eq('id', id)
+                .eq('user_id', user?.id)
                 .single();
 
             if (error) throw error;
             return data as ServicePackageWithItems;
         },
-        enabled: !!id,
+        enabled: !!id && !!user?.id,
     });
 }
 

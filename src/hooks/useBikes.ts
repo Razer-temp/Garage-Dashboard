@@ -9,7 +9,7 @@ export function useBikes(customerId?: string) {
   return useQuery({
     queryKey: ['bikes', user?.id, customerId],
     queryFn: async () => {
-      let query = supabase.from('bikes').select('*');
+      let query = supabase.from('bikes').select().eq('user_id', user?.id);
 
       if (customerId) {
         query = query.eq('customer_id', customerId);
@@ -20,7 +20,7 @@ export function useBikes(customerId?: string) {
       if (error) throw error;
       return data as Bike[];
     },
-    enabled: customerId !== undefined,
+    enabled: !!user?.id,
   });
 }
 
@@ -33,12 +33,13 @@ export function useBike(id: string) {
         .from('bikes')
         .select('*, customer:customers(*)')
         .eq('id', id)
+        .eq('user_id', user?.id)
         .single();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !!id && !!user?.id,
   });
 }
 
@@ -46,10 +47,13 @@ export function useCreateBike() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (bike: Omit<Bike, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (bike: Omit<Bike, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data, error } = await supabase
         .from('bikes')
-        .insert(bike)
+        .insert({ ...bike, user_id: user.id })
         .select()
         .single();
 
@@ -72,10 +76,14 @@ export function useUpdateBike() {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Bike> & { id: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data, error } = await supabase
         .from('bikes')
         .update(updates)
         .eq('id', id)
+        .eq('user_id', user.id)
         .select()
         .single();
 
@@ -99,10 +107,14 @@ export function useDeleteBike() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { error } = await supabase
         .from('bikes')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
 
       if (error) throw error;
     },

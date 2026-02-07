@@ -24,6 +24,10 @@ export function useJobs(status?: JobStatus) {
         query = query.eq('status', status);
       }
 
+      if (user?.id) {
+        query = query.eq('user_id', user.id);
+      }
+
       const { data, error } = await query;
 
       if (error) throw error;
@@ -47,12 +51,13 @@ export function useJob(id: string) {
           )
         `)
         .eq('id', id)
+        .eq('user_id', user?.id)
         .single();
 
       if (error) throw error;
       return data as JobWithDetails;
     },
-    enabled: !!id,
+    enabled: !!id && !!user?.id,
   });
 }
 
@@ -65,12 +70,13 @@ export function useJobsByBike(bikeId: string) {
         .from('jobs')
         .select('*')
         .eq('bike_id', bikeId)
+        .eq('user_id', user?.id)
         .order('date_in', { ascending: false });
 
       if (error) throw error;
       return data as Job[];
     },
-    enabled: !!bikeId,
+    enabled: !!bikeId && !!user?.id,
   });
 }
 
@@ -169,6 +175,7 @@ export function useUpcomingReminders() {
         .not('next_service_date', 'is', null)
         .gte('next_service_date', today)
         .lte('next_service_date', thirtyDaysFromNow)
+        .eq('user_id', user?.id)
         .order('next_service_date', { ascending: true });
 
       if (error) throw error;

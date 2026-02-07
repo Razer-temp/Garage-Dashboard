@@ -12,11 +12,13 @@ export function useInventory() {
             const { data, error } = await supabase
                 .from('inventory_items')
                 .select('*')
+                .eq('user_id', user?.id)
                 .order('name', { ascending: true });
 
             if (error) throw error;
             return data as InventoryItem[];
         },
+        enabled: !!user?.id,
     });
 }
 
