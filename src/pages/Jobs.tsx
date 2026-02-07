@@ -77,6 +77,7 @@ export default function Jobs() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending,in_progress">Active Only</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="ready_for_delivery">Ready for Delivery</SelectItem>

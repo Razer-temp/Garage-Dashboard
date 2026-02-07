@@ -4,7 +4,7 @@ import { Job, JobWithDetails, JobStatus, PaymentStatus, JobInsert, JobUpdate } f
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
-export function useJobs(status?: JobStatus, paymentStatus?: PaymentStatus | PaymentStatus[]) {
+export function useJobs(status?: JobStatus | JobStatus[] | string, paymentStatus?: PaymentStatus | PaymentStatus[]) {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['jobs', user?.id, status, paymentStatus],
@@ -21,7 +21,13 @@ export function useJobs(status?: JobStatus, paymentStatus?: PaymentStatus | Paym
         .order('created_at', { ascending: false });
 
       if (status) {
-        query = query.eq('status', status);
+        if (typeof status === 'string' && status.includes(',')) {
+          query = query.in('status', status.split(',') as any);
+        } else if (Array.isArray(status)) {
+          query = query.in('status', status as any);
+        } else {
+          query = query.eq('status', status as any);
+        }
       }
 
       if (paymentStatus) {
