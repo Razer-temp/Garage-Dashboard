@@ -13,7 +13,8 @@ import {
     AlertTriangle,
     Pencil,
     Trash2,
-    Boxes
+    Boxes,
+    Filter
 } from 'lucide-react';
 import {
     useInventory,
@@ -49,13 +50,26 @@ export default function Inventory() {
         stock_quantity: '0',
         min_stock_level: '0',
         cost_price: '0',
-        selling_price: '0'
+        selling_price: '0',
+        compatible_vehicles: '',
+        part_type: 'Genuine'
     });
+    const [filterType, setFilterType] = useState('all');
+    const [filterStock, setFilterStock] = useState('all');
 
-    const filteredInventory = inventory?.filter(item =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.code?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredInventory = inventory?.filter(item => {
+        const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.compatible_vehicles?.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const matchesType = filterType === 'all' || item.part_type === filterType;
+
+        const matchesStock = filterStock === 'all' ||
+            (filterStock === 'low' && (item.stock_quantity ?? 0) < (item.min_stock_level ?? 0)) ||
+            (filterStock === 'instock' && (item.stock_quantity ?? 0) >= (item.min_stock_level ?? 0));
+
+        return matchesSearch && matchesType && matchesStock;
+    });
 
     const handleOpenAdd = () => {
         setEditingItem(null);
@@ -66,7 +80,9 @@ export default function Inventory() {
             stock_quantity: '',
             min_stock_level: '',
             cost_price: '',
-            selling_price: ''
+            selling_price: '',
+            compatible_vehicles: '',
+            part_type: 'Genuine'
         });
         setIsDialogOpen(true);
     };
@@ -80,7 +96,9 @@ export default function Inventory() {
             stock_quantity: item.stock_quantity?.toString() || '0',
             min_stock_level: item.min_stock_level?.toString() || '0',
             cost_price: item.cost_price?.toString() || '0',
-            selling_price: item.selling_price?.toString() || '0'
+            selling_price: item.selling_price?.toString() || '0',
+            compatible_vehicles: item.compatible_vehicles || '',
+            part_type: item.part_type || 'Genuine'
         });
         setIsDialogOpen(true);
     };
@@ -96,7 +114,9 @@ export default function Inventory() {
             stock_quantity: parseInt(formData.stock_quantity) || 0,
             min_stock_level: parseInt(formData.min_stock_level) || 0,
             cost_price: parseFloat(formData.cost_price) || 0,
-            selling_price: parseFloat(formData.selling_price) || 0
+            selling_price: parseFloat(formData.selling_price) || 0,
+            compatible_vehicles: formData.compatible_vehicles || null,
+            part_type: formData.part_type || 'Genuine'
         };
 
         if (editingItem) {
@@ -168,14 +188,37 @@ export default function Inventory() {
                     </Card>
                 </div>
 
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                        placeholder="Search by part name or code..."
-                        className="pl-10 h-12 text-lg shadow-sm"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className="flex flex-col md:flex-row gap-4">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            placeholder="Search by name, code, or vehicle..."
+                            className="pl-10 h-12 text-lg shadow-sm"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex gap-2">
+                        <select
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value)}
+                            className="h-12 px-4 rounded-md border border-input bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                            <option value="all">All Types</option>
+                            <option value="Genuine">Genuine</option>
+                            <option value="Generic">Generic</option>
+                            <option value="OES">OES</option>
+                        </select>
+                        <select
+                            value={filterStock}
+                            onChange={(e) => setFilterStock(e.target.value)}
+                            className="h-12 px-4 rounded-md border border-input bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                            <option value="all">All Stock</option>
+                            <option value="low">Low Stock</option>
+                            <option value="instock">In Stock</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
@@ -209,8 +252,18 @@ export default function Inventory() {
                                         <tr key={item.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors group">
                                             <td className="p-4">
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-base">{item.name}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-base">{item.name}</span>
+                                                        {item.part_type && (
+                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground font-bold uppercase tracking-tighter">
+                                                                {item.part_type}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <span className="text-xs text-muted-foreground font-mono">{item.code || 'NO-CODE'}</span>
+                                                    {item.compatible_vehicles && (
+                                                        <span className="text-[10px] text-primary italic mt-0.5">Fits: {item.compatible_vehicles}</span>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="p-4">
@@ -263,6 +316,35 @@ export default function Inventory() {
                                     placeholder="e.g. Engine Oil 10W40"
                                     required
                                 />
+                            </div>
+                            <div className="space-y-2 text-primary/80 bg-primary/5 p-3 rounded-lg border border-primary/10">
+                                <Label className="text-[10px] font-black uppercase tracking-widest block mb-1">Internal Reference Details</Label>
+                                <div className="space-y-3">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="compatible_vehicles" className="text-xs font-bold text-muted-foreground">Compatible Vehicles</Label>
+                                        <Input
+                                            id="compatible_vehicles"
+                                            value={formData.compatible_vehicles}
+                                            onChange={(e) => setFormData({ ...formData, compatible_vehicles: e.target.value })}
+                                            placeholder="e.g. Activa 6G, Jupiter, Access"
+                                            className="bg-background/50 h-8 text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="part_type" className="text-xs font-bold text-muted-foreground">Part Quality/Type</Label>
+                                        <select
+                                            id="part_type"
+                                            value={formData.part_type}
+                                            onChange={(e) => setFormData({ ...formData, part_type: e.target.value })}
+                                            className="w-full h-8 px-3 rounded-md border border-input bg-background/50 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                                        >
+                                            <option value="Genuine">Genuine</option>
+                                            <option value="Generic">Generic</option>
+                                            <option value="OES">OES</option>
+                                            <option value="Aftermarket">Aftermarket</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">

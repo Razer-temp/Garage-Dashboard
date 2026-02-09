@@ -226,12 +226,14 @@ export type Database = {
       inventory_items: {
         Row: {
           code: string | null
+          compatible_vehicles: string | null
           cost_price: number | null
           created_at: string
           description: string | null
           id: string
           min_stock_level: number | null
           name: string
+          part_type: string | null
           selling_price: number | null
           stock_quantity: number | null
           updated_at: string
@@ -239,12 +241,14 @@ export type Database = {
         }
         Insert: {
           code?: string | null
+          compatible_vehicles?: string | null
           cost_price?: number | null
           created_at?: string
           description?: string | null
           id?: string
           min_stock_level?: number | null
           name: string
+          part_type?: string | null
           selling_price?: number | null
           stock_quantity?: number | null
           updated_at?: string
@@ -252,12 +256,14 @@ export type Database = {
         }
         Update: {
           code?: string | null
+          compatible_vehicles?: string | null
           cost_price?: number | null
           created_at?: string
           description?: string | null
           id?: string
           min_stock_level?: number | null
           name?: string
+          part_type?: string | null
           selling_price?: number | null
           stock_quantity?: number | null
           updated_at?: string
