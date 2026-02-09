@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,8 +33,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-
 export default function Reports() {
+    const { user } = useAuth();
     const [dateRange, setDateRange] = useState<DateRange | undefined>({
         from: subDays(new Date(), 30),
         to: new Date(),
@@ -67,13 +68,14 @@ export default function Reports() {
     };
 
     const { data: revenueData, isLoading: revenueLoading } = useQuery({
-        queryKey: ['reports-revenue', dateRange],
+        queryKey: ['reports-revenue', dateRange, user?.id],
         queryFn: async () => {
-            if (!dateRange?.from) return [];
+            if (!dateRange?.from || !user?.id) return [];
 
             const { data: jobs, error } = await supabase
                 .from('jobs')
                 .select('*')
+                .eq('user_id', user.id)
                 .gte('created_at', startOfDay(dateRange.from).toISOString())
                 .lte('created_at', endOfDay(dateRange.to || new Date()).toISOString())
                 .eq('payment_status', 'paid'); // Only count paid jobs for revenue
@@ -81,16 +83,18 @@ export default function Reports() {
             if (error) throw error;
             return jobs;
         },
+        enabled: !!user?.id,
     });
 
     const { data: topCustomers, isLoading: customersLoading } = useQuery({
-        queryKey: ['reports-customers', dateRange],
+        queryKey: ['reports-customers', dateRange, user?.id],
         queryFn: async () => {
-            if (!dateRange?.from) return [];
+            if (!dateRange?.from || !user?.id) return [];
 
             const { data, error } = await supabase
                 .from('jobs')
                 .select('*, bike:bikes(customer:customers(name, phone))')
+                .eq('user_id', user.id)
                 .gte('created_at', startOfDay(dateRange.from).toISOString())
                 .lte('created_at', endOfDay(dateRange.to || new Date()).toISOString())
                 .eq('payment_status', 'paid');
@@ -119,8 +123,9 @@ export default function Reports() {
     });
 
     const { data: partsStats, isLoading: partsLoading } = useQuery({
-        queryKey: ['reports-parts', dateRange],
+        queryKey: ['reports-parts', dateRange, user?.id],
         queryFn: async () => {
+            if (!user?.id || !dateRange?.from) return [];
             // Fetch job_parts joined with inventory_items if needed, or just aggregate raw text for now if migration isn't fully used yet
             // For now, let's try to fetch job_parts if the table exists and has data, otherwise fallback or show empty.
             // Since we JUST created the schema, it's likely empty. Let's safely try to fetch.
@@ -128,8 +133,9 @@ export default function Reports() {
             const { data, error } = await supabase
                 .from('job_parts')
                 .select('*')
-                .gte('created_at', startOfDay(dateRange!.from!).toISOString())
-                .lte('created_at', endOfDay(dateRange!.to || new Date()).toISOString());
+                .eq('user_id', user.id)
+                .gte('created_at', startOfDay(dateRange.from).toISOString())
+                .lte('created_at', endOfDay(dateRange.to || new Date()).toISOString());
 
             if (error) {
                 console.error('Error fetching parts stats:', error);

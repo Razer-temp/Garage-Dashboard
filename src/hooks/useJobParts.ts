@@ -1,22 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { JobPartInsert, JobPartUpdate } from '@/types/database';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useJobParts(jobId: string) {
+    const { user } = useAuth();
     return useQuery({
-        queryKey: ['job_parts', jobId],
+        queryKey: ['job_parts', jobId, user?.id],
         queryFn: async () => {
-            if (!jobId) return [];
+            if (!jobId || !user?.id) return [];
             const { data, error } = await supabase
                 .from('job_parts')
                 .select('*')
                 .eq('job_id', jobId)
+                .eq('user_id', user.id)
                 .order('created_at', { ascending: true });
 
             if (error) throw error;
             return data;
         },
-        enabled: !!jobId,
+        enabled: !!jobId && !!user?.id,
     });
 }
 

@@ -209,6 +209,7 @@ export function useGenerateInvoice() {
         .from('jobs')
         .select('invoice_number')
         .not('invoice_number', 'is', null)
+        .eq('user_id', user?.id)
         .order('invoice_number', { ascending: false })
         .limit(1);
 
@@ -233,6 +234,7 @@ export function useGenerateInvoice() {
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
+        .eq('user_id', user?.id)
         .select()
         .single();
 
