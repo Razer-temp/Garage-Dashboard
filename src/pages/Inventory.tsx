@@ -29,6 +29,13 @@ import {
     DialogTitle,
     DialogFooter,
 } from '@/components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { InventoryItemInsert, InventoryItemUpdate } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -199,25 +206,28 @@ export default function Inventory() {
                         />
                     </div>
                     <div className="flex gap-2">
-                        <select
-                            value={filterType}
-                            onChange={(e) => setFilterType(e.target.value)}
-                            className="h-12 px-4 rounded-md border border-input bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring"
-                        >
-                            <option value="all">All Types</option>
-                            <option value="Genuine">Genuine</option>
-                            <option value="Generic">Generic</option>
-                            <option value="OES">OES</option>
-                        </select>
-                        <select
-                            value={filterStock}
-                            onChange={(e) => setFilterStock(e.target.value)}
-                            className="h-12 px-4 rounded-md border border-input bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring"
-                        >
-                            <option value="all">All Stock</option>
-                            <option value="low">Low Stock</option>
-                            <option value="instock">In Stock</option>
-                        </select>
+                        <Select value={filterType} onValueChange={setFilterType}>
+                            <SelectTrigger className="h-12 w-[140px] bg-background">
+                                <SelectValue placeholder="Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Types</SelectItem>
+                                <SelectItem value="Genuine">Genuine</SelectItem>
+                                <SelectItem value="Generic">Generic</SelectItem>
+                                <SelectItem value="OES">OES</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={filterStock} onValueChange={setFilterStock}>
+                            <SelectTrigger className="h-12 w-[140px] bg-background">
+                                <SelectValue placeholder="Stock" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Stock</SelectItem>
+                                <SelectItem value="low">Low Stock</SelectItem>
+                                <SelectItem value="instock">In Stock</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
 
@@ -332,17 +342,20 @@ export default function Inventory() {
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="part_type" className="text-xs font-bold text-muted-foreground">Part Quality/Type</Label>
-                                        <select
-                                            id="part_type"
+                                        <Select
                                             value={formData.part_type}
-                                            onChange={(e) => setFormData({ ...formData, part_type: e.target.value })}
-                                            className="w-full h-8 px-3 rounded-md border border-input bg-background/50 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                                            onValueChange={(val) => setFormData({ ...formData, part_type: val })}
                                         >
-                                            <option value="Genuine">Genuine</option>
-                                            <option value="Generic">Generic</option>
-                                            <option value="OES">OES</option>
-                                            <option value="Aftermarket">Aftermarket</option>
-                                        </select>
+                                            <SelectTrigger id="part_type" className="h-8 bg-background/50 text-xs">
+                                                <SelectValue placeholder="Select type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Genuine">Genuine</SelectItem>
+                                                <SelectItem value="Generic">Generic</SelectItem>
+                                                <SelectItem value="OES">OES</SelectItem>
+                                                <SelectItem value="Aftermarket">Aftermarket</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
                             </div>
